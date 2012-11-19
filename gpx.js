@@ -77,8 +77,10 @@ function parseGPX(xml, filename, args) {
         d.elevation = parseFloat(trkpt.getElementsByTagName('ele')[0].textContent)
         if(d.elevation > 32768) d.elevation = 65535 - d.elevation;
 
-        d.heartrate = parseFloat(trkpt.getElementsByTagName(prefix + 'hr')[0].textContent)
-        d.speed = parseFloat(trkpt.getElementsByTagName(prefix + 'speed')[0].textContent)
+        var hr = trkpt.getElementsByTagName(prefix + 'hr')[0];
+        if (hr) d.heartrate = parseFloat(hr.textContent);
+        var spd = trkpt.getElementsByTagName(prefix + 'speed')[0];
+        if (spd) d.speed = parseFloat(spd.textContent);
         if(typeof min_speed == 'undefined' || min_speed > d.speed) min_speed = d.speed;
         if(typeof max_speed == 'undefined' || max_speed < d.speed) max_speed = d.speed;
     }
@@ -126,6 +128,10 @@ function parseGPX(xml, filename, args) {
         distance_total += d;
         points[i].distance = distance_total;
         points[i].grade = (points[i].elevation - points[i - 1].elevation) / d;
+
+        if (!points[i].hasOwnProperty('speed')) {
+            points[i].speed = d / (points[i].time - points[i -1].time) * 3600;
+        }
     }
 
     var pause = 0;
@@ -371,6 +377,9 @@ function parseGPX(xml, filename, args) {
                 d[k] = points[i][k];
         d.x = current_X;
         plot.push(d);
+
+	// plot = points;
+	// points.forEach(function(p, i) { p.point = i; p.x = getX(p) });
 
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
